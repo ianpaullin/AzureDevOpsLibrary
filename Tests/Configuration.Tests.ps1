@@ -1,0 +1,1 @@
+Write-Host "Running Configuration.Tests."
