@@ -1,41 +1,61 @@
 class Configuration {
-    [string]$AzureDevOpsUrl 
-    [string]$PersonalAccessToken
-    [hashtable]$EnvironmentVariables
+    [string]
+    $AzureDevOpsUrl 
+    
+    [string]
+    $PersonalAccessToken
+    
+    [hashtable]
+    $EnvironmentVariables
+
+    [string]
+    $AzureDevOpsUserEmail
+
+    [string]
+    $AzureDevOpsPersonalAccessToken
 
     Configuration() {
-        # check for environment variables first
-        $tempHt = $this.GetEnvironmentVariables()
+        $this.Init()
+    }
 
-        if ($tempHt.Count -gt 0 ) {
-            $this.EnvironmentVariables = $tempHt
-        }
+    [void]Init() {
+        $this.GetAzureDevOpsEnvironmentVariables()
     }
 
     [void]SetPersonalAccessToken ( [string]$PAToken ) {
-        $this.PersonalAccessToken = $PAToken 
+        PersonalAccessToken = $PAToken 
     }
 
     [string]GetAzureDevOpsUrl() {
-        return $this.AzureDevOpsUrl
+        return AzureDevOpsUrl
     }
 
-    [hashtable]GetEnvironmentVariables() {
-        $envHt = @{}
+    [string]GetEnvironmentVariableValue([string]$keyName) {
 
-        return [Hashtable] (((Get-Item -Path Env:) | sort-object -property Name -Descending) | `
-            ForEach-Object { $envHt.Add($_.key, $_.value) })
+        $evHT = $this.GetEnvironmentVariables()
+
+        if ($evHT.count -gt 0) {
+            return ($evHT | ?{ $_.Key -eq "$($keyName)" }).Value
+        }
+        else {
+            return [String]::Empty()
+        }
+        
     }
+
+    [object[]]GetEnvironmentVariables() {
+        return (((Get-Item -Path Env:) | sort-object -property Name -Descending) | ForEach-Object { $envHt.Add($_.key, $_.value) })
+    }
+
+    [void]GetAzureDevOpsEnvironmentVariables() {
+
+        $this.AzureDevOpsUserEmail = $this.GetEnvironmentVariableValue("AZDO_USER_EMAIL")
+        $this.AzureDevOpsPersonalAccessToken = $this.GetEnvironmentVariableValue("AZDO_USER_PAT")
+    }
+
 
     [bool]FindEnvironmentVariable([string]$KeyName) {
         return $true
     }
 
 }
-
-$test = [AzureDevOpsConfig]::new()
-
-$test.EnvironmentVariables.Count
-$test.EnvironmentVariables
-
-$test.GetEnvironmentVariables()
